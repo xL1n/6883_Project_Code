@@ -1,0 +1,39 @@
+//code used to fetch transfer events and convert into csv file
+const axios = require("axios");
+//eventually to csv file
+const createCsvWriter = require("csv-writer").createObjectCsvWriter;
+//the subgraph i created in graph studio 
+const GRAPHQL_ENDPOINT = "https://api.studio.thegraph.com/query/110763/lilpudgys/v0.0.5";
+//infor i need to fetch for lilpudgys
+const query = `
+{
+  transfers(first: 100, orderBy: blockTimestamp, orderDirection: desc) {
+    id
+    from
+    to
+    tokenId
+    blockTimestamp
+  }
+}
+`;
+async function fetchData() {
+  try {
+    const response = await axios.post(GRAPHQL_ENDPOINT, { query });
+    const transfers = response.data.data.transfers;
+    const csvWriter = createCsvWriter({
+      path: "transfers.csv",
+      header: [
+        { id: "id", title: "ID" },
+        { id: "from", title: "From" },
+        { id: "to", title: "To" },
+        { id: "tokenId", title: "Token ID" },
+        { id: "blockTimestamp", title: "Timestamp" },
+      ]
+    });
+    await csvWriter.writeRecords(transfers);
+    console.log("Exported transfers to transfers.csv");
+  } catch (error) {
+    console.error("Error fetching data:", error.message);
+  }
+}
+fetchData();
